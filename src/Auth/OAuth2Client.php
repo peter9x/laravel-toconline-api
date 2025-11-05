@@ -9,26 +9,33 @@ use Illuminate\Support\Facades\Cache;
 class OAuth2Client
 {
     private string $authUrl;
+
     private string $tokenUrl;
+
     private string $clientId;
+
     private string $clientSecret;
+
     private string $redirectUri;
+
     private Client $http;
 
     private ?string $accessToken = null;
+
     private ?int $expiresIn = null;
+
     private ?int $tokenIssuedAt = null;
 
     public function __construct(string $baseUrlOAuth, string $clientId, string $clientSecret, string $redirectUri)
     {
-        $this->authUrl = rtrim($baseUrlOAuth, '/') . '/auth';
-        $this->tokenUrl = rtrim($baseUrlOAuth, '/') . '/token';
+        $this->authUrl = rtrim($baseUrlOAuth, '/').'/auth';
+        $this->tokenUrl = rtrim($baseUrlOAuth, '/').'/token';
         $this->clientId = $clientId;
         $this->clientSecret = $clientSecret;
         $this->redirectUri = $redirectUri;
         $this->http = new Client([
             'timeout' => 10,
-            'verify' => true
+            'verify' => true,
         ]);
     }
 
@@ -45,7 +52,7 @@ class OAuth2Client
             $this->expiresIn = $cached['expires_in'];
             $this->tokenIssuedAt = $cached['token_issued_at'];
 
-            if (!$this->isTokenExpired()) {
+            if (! $this->isTokenExpired()) {
                 return $this->accessToken;
             }
         }
@@ -63,7 +70,7 @@ class OAuth2Client
                 ],
             ]);
 
-            $data = json_decode((string)$response->getBody(), true);
+            $data = json_decode((string) $response->getBody(), true);
 
             if (empty($data['access_token'])) {
                 throw new \RuntimeException('Invalid OAuth2 token response: missing access_token');
@@ -86,7 +93,7 @@ class OAuth2Client
                 ? (string) $e->getResponse()->getBody()
                 : $e->getMessage();
 
-            throw new \RuntimeException("Failed to obtain OAuth2 token: " . $body);
+            throw new \RuntimeException('Failed to obtain OAuth2 token: '.$body);
         }
     }
 
@@ -95,11 +102,12 @@ class OAuth2Client
      */
     private function isTokenExpired(): bool
     {
-        if (!$this->accessToken || !$this->expiresIn || !$this->tokenIssuedAt) {
+        if (! $this->accessToken || ! $this->expiresIn || ! $this->tokenIssuedAt) {
             return true;
         }
 
         $elapsed = time() - $this->tokenIssuedAt;
+
         return $elapsed >= ($this->expiresIn - 30);
     }
 
@@ -113,10 +121,11 @@ class OAuth2Client
             'client_id' => $this->clientId,
             'redirect_uri' => $this->redirectUri,
             'scope' => 'commercial',
-            'state' => bin2hex(random_bytes(16))
+            'state' => bin2hex(random_bytes(16)),
         ];
 
         $query = http_build_query(array_merge($defaultParams, $params));
+
         return "{$this->authUrl}?{$query}";
     }
 }

@@ -8,6 +8,7 @@ use Mupy\TOConline\Auth\OAuth2Client;
 class TOCClient
 {
     private Client $http;
+
     private string $accessToken;
 
     public function __construct(
@@ -35,15 +36,16 @@ class TOCClient
             'headers' => [
                 'Authorization' => "Bearer {$this->accessToken}",
                 'Accept' => 'application/json',
-                'Content-Type' => 'application/vnd.api+json'
-            ]
+                'Content-Type' => 'application/vnd.api+json',
+            ],
         ];
 
-        if (!empty($body)) {
+        if (! empty($body)) {
             $options['json'] = $body;
         }
 
         $response = $this->http->request($method, $uri, $options);
+
         return json_decode($response->getBody(), true);
     }
 }

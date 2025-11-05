@@ -36,16 +36,16 @@
     },
     "autoload": {
         "psr-4": {
-            "Mupy\\Toconline\\": "src/"
+            "Mupy\\TOConline\\": "src/"
         }
     },
     "extra": {
         "laravel": {
             "providers": [
-                "Mupy\\Toconline\\ToconlineServiceProvider"
+                "Mupy\\TOConline\\TOConlineServiceProvider"
             ],
             "aliases": {
-                "Toconline": "Mupy\\Toconline\\Facades\\Toconline"
+                "TOConline": "Mupy\\TOConline\\Facades\\TOConline"
             }
         }
     },

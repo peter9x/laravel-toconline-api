@@ -2,8 +2,8 @@
 
 namespace Tests\Unit;
 
-use Mupy\TOConline\TOConlineServiceProvider;
 use Mupy\TOConline\Facades\TOConline;
+use Mupy\TOConline\TOConlineServiceProvider;
 use Orchestra\Testbench\TestCase;
 
 class ServiceProviderTest extends TestCase

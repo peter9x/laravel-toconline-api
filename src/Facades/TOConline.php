@@ -8,6 +8,6 @@ class TOConline extends Facade
 {
     protected static function getFacadeAccessor()
     {
-        return 'TOConline';
+        return 'toconline';
     }
 }
