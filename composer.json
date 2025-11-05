@@ -39,6 +39,14 @@
             "Mupy\\TOConline\\": "src/"
         }
     },
+    "scripts": {
+        "test": [
+            "@php vendor/bin/pint --test"
+        ],
+        "lint": [
+            "@php vendor/bin/pint"
+        ]
+    },
     "extra": {
         "laravel": {
             "providers": [

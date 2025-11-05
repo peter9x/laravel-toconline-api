@@ -11,6 +11,7 @@ use RuntimeException;
 final class TOConlineAuth
 {
     private readonly string $oauthUrl;
+
     private string $scope = 'commercial';
 
     public function __construct(
@@ -24,7 +25,7 @@ final class TOConlineAuth
 
     protected static function getCacheKey(string $clientId, string $key): string
     {
-        return "toconline_{$key}_" . sha1($clientId);
+        return "toconline_{$key}_".sha1($clientId);
     }
 
     /**
@@ -44,6 +45,7 @@ final class TOConlineAuth
 
     /**
      * Obtain authorization code via redirect resolution (if supported).
+     *
      * @throws RuntimeException
      */
     public function oauthAuthorizationCode(string $key = 'code'): string
@@ -71,6 +73,7 @@ final class TOConlineAuth
 
     /**
      * Exchange an authorization code for an access token.
+     *
      * @throws RuntimeException
      */
     public function requestAccessToken(string $authorizationCode = ''): array
@@ -79,7 +82,7 @@ final class TOConlineAuth
             ? $authorizationCode
             : $this->oauthAuthorizationCode();
 
-        $authorization = 'Basic ' . base64_encode("{$this->clientId}:{$this->clientSecret}");
+        $authorization = 'Basic '.base64_encode("{$this->clientId}:{$this->clientSecret}");
 
         $response = Http::asForm()
             ->withHeaders([
@@ -93,21 +96,22 @@ final class TOConlineAuth
             ]);
 
         if ($response->failed()) {
-            throw new RuntimeException('Erro ao obter access_token: ' . $response->body());
+            throw new RuntimeException('Erro ao obter access_token: '.$response->body());
         }
 
         $data = $response->json();
 
         return [
-            'access_token'  => $data['access_token'] ?? throw new RuntimeException('access_token ausente na resposta.'),
-            'expires_in'    => (int) ($data['expires_in'] ?? 3600),
+            'access_token' => $data['access_token'] ?? throw new RuntimeException('access_token ausente na resposta.'),
+            'expires_in' => (int) ($data['expires_in'] ?? 3600),
             'refresh_token' => $data['refresh_token'] ?? null,
-            'created_at'    => time(),
+            'created_at' => time(),
         ];
     }
 
     /**
      * Refresh the access token using a stored or provided refresh_token.
+     *
      * @throws RuntimeException
      */
     public function refreshAccessToken(?string $refreshToken = null): array
@@ -116,7 +120,7 @@ final class TOConlineAuth
             ?? Cache::get(self::getCacheKey($this->clientId, 'refresh_token'))
             ?? throw new RuntimeException('Nenhum refresh_token encontrado.');
 
-        $authorization = 'Basic ' . base64_encode("{$this->clientId}:{$this->clientSecret}");
+        $authorization = 'Basic '.base64_encode("{$this->clientId}:{$this->clientSecret}");
 
         $response = Http::asForm()
             ->withHeaders([
@@ -124,22 +128,22 @@ final class TOConlineAuth
                 'Authorization' => $authorization,
             ])
             ->post("{$this->oauthUrl}/token", [
-                'grant_type'    => 'refresh_token',
+                'grant_type' => 'refresh_token',
                 'refresh_token' => $refreshToken,
-                'scope'         => $this->scope,
+                'scope' => $this->scope,
             ]);
 
         if ($response->failed()) {
-            throw new RuntimeException('Erro ao renovar access_token: ' . $response->body());
+            throw new RuntimeException('Erro ao renovar access_token: '.$response->body());
         }
 
         $data = $response->json();
 
         return [
-            'access_token'  => $data['access_token'] ?? throw new RuntimeException('access_token ausente na resposta.'),
-            'expires_in'    => (int) ($data['expires_in'] ?? 3600),
+            'access_token' => $data['access_token'] ?? throw new RuntimeException('access_token ausente na resposta.'),
+            'expires_in' => (int) ($data['expires_in'] ?? 3600),
             'refresh_token' => $data['refresh_token'] ?? $refreshToken,
-            'created_at'    => time(),
+            'created_at' => time(),
         ];
     }
 
@@ -149,7 +153,7 @@ final class TOConlineAuth
     public function getBearer(): string
     {
         $cacheKey = self::getCacheKey($this->clientId, 'access_token');
-        $lockKey  = "{$cacheKey}_lock";
+        $lockKey = "{$cacheKey}_lock";
 
         $tokenData = Cache::get($cacheKey);
 
@@ -159,7 +163,7 @@ final class TOConlineAuth
             $isExpired = (time() >= $expiresAt - 30); // refresh 30s early
         }
 
-        if (!$isExpired && isset($tokenData['access_token'])) {
+        if (! $isExpired && isset($tokenData['access_token'])) {
             return $tokenData['access_token'];
         }
 
@@ -173,13 +177,13 @@ final class TOConlineAuth
                 if (is_array($tokenData) && isset($tokenData['created_at'], $tokenData['expires_in'])) {
                     $expiresAt = $tokenData['created_at'] + $tokenData['expires_in'];
                     $isExpired = (time() >= $expiresAt - 30);
-                    if (!$isExpired && isset($tokenData['access_token'])) {
+                    if (! $isExpired && isset($tokenData['access_token'])) {
                         return $tokenData['access_token'];
                     }
                 }
 
                 // Refresh or request new
-                $tokenData = !empty($tokenData['refresh_token'])
+                $tokenData = ! empty($tokenData['refresh_token'])
                     ? $this->refreshAccessToken($tokenData['refresh_token'])
                     : $this->requestAccessToken();
 
@@ -196,6 +200,7 @@ final class TOConlineAuth
             }
 
             usleep(200_000);
+
             return $this->getBearer();
         } finally {
             optional($lock)->release();

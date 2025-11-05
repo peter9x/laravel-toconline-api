@@ -12,7 +12,9 @@ use RuntimeException;
 final class TOCClient
 {
     private readonly Client $http;
+
     private readonly TOConlineAuth $oauthClient;
+
     private ?string $accessToken = null;
 
     public function __construct(
@@ -20,7 +22,7 @@ final class TOCClient
         private readonly string $baseUrl,
         private readonly string $baseUrlOAuth
     ) {
-        $this->http = new Client(['base_uri' => rtrim($this->baseUrl, '/') . '/']);
+        $this->http = new Client(['base_uri' => rtrim($this->baseUrl, '/').'/']);
 
         // Try resolving redirect URI if route() is available (Laravel)
         $redirectUri = function_exists('route')
@@ -51,10 +53,9 @@ final class TOCClient
      * Sends authenticated HTTP requests to TOConline API.
      * Automatically retries once on 401 (token expired).
      *
-     * @param string $method  HTTP method (GET, POST, PUT, DELETE)
-     * @param string $uri     Endpoint URI (relative)
-     * @param array  $body    Optional JSON body
-     *
+     * @param  string  $method  HTTP method (GET, POST, PUT, DELETE)
+     * @param  string  $uri  Endpoint URI (relative)
+     * @param  array  $body  Optional JSON body
      * @return array Decoded JSON response
      *
      * @throws RuntimeException|\Throwable
@@ -71,13 +72,13 @@ final class TOCClient
     {
         $options = [
             'headers' => [
-                'Authorization' => 'Bearer ' . $this->getAccessToken(),
-                'Accept'        => 'application/json',
-                'Content-Type'  => 'application/vnd.api+json',
+                'Authorization' => 'Bearer '.$this->getAccessToken(),
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/vnd.api+json',
             ],
         ];
 
-        if (!empty($body)) {
+        if (! empty($body)) {
             $options['json'] = $body;
         }
 
@@ -93,6 +94,7 @@ final class TOCClient
             if ($status === 401 && $retry) {
                 // Force token refresh and retry once
                 $this->accessToken = $this->oauthClient->getBearer();
+
                 return $this->sendRequest($method, $uri, $body, retry: false);
             }
 
