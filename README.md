@@ -27,12 +27,12 @@ php artisan vendor:publish --provider="Mupy\\TOConline\\TOConlineServiceProvider
 ```env
 TOC_CLIENT_ID=your-client-id
 TOC_CLIENT_SECRET=your-client-secret
+TOC_URI_OAUTH=https://example.com/callback
 ```
 4. Optional config to add on the `.env` file:
 ```env
 TOC_BASE_URL=https://example.com
 TOC_BASE_URL_OAUTH=https://example.com/oauth
-TOC_URI_OAUTH=https://example.com/callback
 ```
 
 ## Usage
