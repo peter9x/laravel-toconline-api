@@ -6,14 +6,17 @@ namespace Mupy\TOConline\Support;
 
 use BackedEnum;
 use Mupy\TOConline\TOCClient;
-use RuntimeException;
 
 final class TOCQueryBuilder
 {
     private array $filters = [];
+
     private array $sort = [];
+
     private array $includes = [];
+
     private ?int $page = null;
+
     private ?int $pageSize = null;
 
     public function __construct(
@@ -33,6 +36,7 @@ final class TOCQueryBuilder
             $value = $value->value;
         }
         $this->filters[$field] = $value;
+
         return $this;
     }
 
@@ -43,6 +47,7 @@ final class TOCQueryBuilder
             $status = $status->value;
         }
         $this->filters['status'] = $status;
+
         return $this;
     }
 
@@ -50,7 +55,8 @@ final class TOCQueryBuilder
     public function orderBy(string $field, string $direction = 'asc'): self
     {
         $prefix = strtolower($direction) === 'desc' ? '-' : '';
-        $this->sort[] = $prefix . $field;
+        $this->sort[] = $prefix.$field;
+
         return $this;
     }
 
@@ -59,6 +65,7 @@ final class TOCQueryBuilder
     {
         $relations = is_array($relations) ? $relations : [$relations];
         $this->includes = array_merge($this->includes, $relations);
+
         return $this;
     }
 
@@ -67,6 +74,7 @@ final class TOCQueryBuilder
     {
         $this->page = $page;
         $this->pageSize = $pageSize;
+
         return $this->get();
     }
 
@@ -79,11 +87,11 @@ final class TOCQueryBuilder
             $query["filter[{$key}]"] = $value;
         }
 
-        if (!empty($this->sort)) {
+        if (! empty($this->sort)) {
             $query['sort'] = implode(',', $this->sort);
         }
 
-        if (!empty($this->includes)) {
+        if (! empty($this->includes)) {
             $query['include'] = implode(',', array_unique($this->includes));
         }
 
@@ -100,7 +108,8 @@ final class TOCQueryBuilder
 
     public function find(int|string $id): array
     {
-        $uri = rtrim($this->endpoint, '/') . '/' . urlencode((string) $id);
+        $uri = rtrim($this->endpoint, '/').'/'.urlencode((string) $id);
+
         return $this->client->request('GET', $uri);
     }
 
@@ -108,7 +117,7 @@ final class TOCQueryBuilder
     public function get(): array
     {
         $queryString = http_build_query($this->toQuery());
-        $uri = "{$this->endpoint}?" . $queryString;
+        $uri = "{$this->endpoint}?".$queryString;
 
         return $this->client->request('GET', $uri);
     }
