@@ -105,4 +105,16 @@ final class TOCClient
             throw new RuntimeException($msg, $status ?? 0, $e);
         }
     }
+
+    public function documents(): \Mupy\TOConline\Support\TOCQueryBuilder
+    {
+        return \Mupy\TOConline\Support\TOCQueryBuilder::make($this, '/api/v1/commercial_sales_documents');
+    }
+
+    public function getDocument(int|string $id): \Mupy\TOConline\DTO\SalesDocument
+    {
+        $response = $this->request('GET', "/api/v1/commercial_sales_documents/{$id}");
+
+        return \Mupy\TOConline\DTO\SalesDocument::fromArray($response);
+    }
 }

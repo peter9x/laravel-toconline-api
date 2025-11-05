@@ -40,10 +40,23 @@ TOC_URI_OAUTH=https://example.com/callback
 ```php
 use Mupy\TOConline\Facades\TOConline;
 
-$api = TOConline::getClient();
-
 try {
+    $docs = TOConline::api()->documents();
 } catch (\Throwable $th) {
     // Handle exceptions as needed
 }
 ```
+try {
+
+        //$response = $tocClient->request('GET', 'api/commercial_sales_documents');
+
+        //$docs = $tocClient->documents()->paginate(1, 10);
+        //$doc = $tocClient->documents()->find(76);
+        $doc = $tocClient->getDocument(76);
+
+        dd($doc);
+
+    } catch (\Throwable $th) {
+        throw($th);
+        // Handle exceptions as needed
+    }

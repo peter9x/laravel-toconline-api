@@ -43,16 +43,4 @@ class TOConlineClient
             redirectUriOauth: $this->config['redirect_uri_oauth']
         );
     }
-
-    public function documents(): \Mupy\TOConline\Support\TOCQueryBuilder
-    {
-        return \Mupy\TOConline\Support\TOCQueryBuilder::make($this->api(), '/api/v1/commercial_sales_documents');
-    }
-
-    public function getDocument(int|string $id): \Mupy\TOConline\DTO\SalesDocument
-    {
-        $response = $this->api()->request('GET', "/api/v1/commercial_sales_documents/{$id}");
-
-        return \Mupy\TOConline\DTO\SalesDocument::fromArray($response);
-    }
 }
