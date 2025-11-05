@@ -13,14 +13,14 @@ class TOConlineClient
         if (! isset($config['connections']) || ! is_array($config['connections'])) {
             throw new InvalidArgumentException("Config must have a 'connections' array.");
         }
-        if (! isset($config['api_url'])) {
-            throw new InvalidArgumentException("Config must have an 'api_url' defined.");
+        if (! isset($config['base_url']) || ! isset($config['base_url_oauth']) || ! isset($config['redirect_uri_oauth'])) {
+            throw new InvalidArgumentException("Config must have an 'base_url' or 'base_url_oauth' or 'redirect_uri_oauth' defined.");
         }
 
         $this->config = $config;
     }
 
-    public function getClient(string $connectionName = 'default'): TOCClient
+    public function api(string $connectionName = 'default'): TOCClient
     {
         if (! isset($this->config['connections'][$connectionName])) {
             throw new InvalidArgumentException("The Business Central connection '{$connectionName}' doesn't exist.");
@@ -31,8 +31,7 @@ class TOConlineClient
         return new TOCClient(
             $connection,
             baseUrl: $this->config['base_url'],
-            baseUrlOAuth: $this->config['base_url_oauth'],
-            redirect_uri_oauth: $this->config['redirect_uri_oauth']
+            baseUrlOAuth: $this->config['base_url_oauth']
         );
     }
 }

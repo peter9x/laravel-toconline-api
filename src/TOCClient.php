@@ -1,51 +1,109 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Mupy\TOConline;
 
 use GuzzleHttp\Client;
-use Mupy\TOConline\Auth\OAuth2Client;
+use GuzzleHttp\Exception\ClientException;
+use Mupy\TOConline\Auth\TOConlineAuth;
+use RuntimeException;
 
-class TOCClient
+final class TOCClient
 {
-    private Client $http;
-
-    private string $accessToken;
+    private readonly Client $http;
+    private readonly TOConlineAuth $oauthClient;
+    private ?string $accessToken = null;
 
     public function __construct(
         array $config,
-        string $redirect_uri_oauth,
-        private string $baseUrl,
-        private string $baseUrlOAuth
+        private readonly string $baseUrl,
+        private readonly string $baseUrlOAuth
     ) {
+        $this->http = new Client(['base_uri' => rtrim($this->baseUrl, '/') . '/']);
 
-        $this->http = new Client(['base_uri' => $this->baseUrl]);
+        // Try resolving redirect URI if route() is available (Laravel)
+        $redirectUri = function_exists('route')
+            ? route('toconline.callback')
+            : ($config['redirect_uri'] ?? throw new RuntimeException('Redirect URI is required.'));
 
-        $oauthClient = new OAuth2Client(
+        $this->oauthClient = new TOConlineAuth(
+            $config['client_id'] ?? throw new RuntimeException('client_id missing.'),
+            $config['client_secret'] ?? throw new RuntimeException('client_secret missing.'),
             $this->baseUrlOAuth,
-            $config['client_id'],
-            $config['client_secret'],
-            $redirect_uri_oauth
+            $redirectUri
         );
-
-        $this->accessToken = $oauthClient->getAccessToken();
     }
 
-    public function request(string $method, string $uri, array $body = [])
+    /**
+     * Lazily fetches or refreshes OAuth access token.
+     */
+    private function getAccessToken(): string
+    {
+        if ($this->accessToken === null) {
+            $this->accessToken = $this->oauthClient->getBearer();
+        }
+
+        return $this->accessToken;
+    }
+
+    /**
+     * Sends authenticated HTTP requests to TOConline API.
+     * Automatically retries once on 401 (token expired).
+     *
+     * @param string $method  HTTP method (GET, POST, PUT, DELETE)
+     * @param string $uri     Endpoint URI (relative)
+     * @param array  $body    Optional JSON body
+     *
+     * @return array Decoded JSON response
+     *
+     * @throws RuntimeException|\Throwable
+     */
+    public function request(string $method, string $uri, array $body = []): array
+    {
+        return $this->sendRequest($method, $uri, $body, retry: true);
+    }
+
+    /**
+     * Internal request handler with controlled retry logic.
+     */
+    private function sendRequest(string $method, string $uri, array $body, bool $retry): array
     {
         $options = [
             'headers' => [
-                'Authorization' => "Bearer {$this->accessToken}",
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/vnd.api+json',
+                'Authorization' => 'Bearer ' . $this->getAccessToken(),
+                'Accept'        => 'application/json',
+                'Content-Type'  => 'application/vnd.api+json',
             ],
         ];
 
-        if (! empty($body)) {
+        if (!empty($body)) {
             $options['json'] = $body;
         }
 
-        $response = $this->http->request($method, $uri, $options);
+        try {
+            $response = $this->http->request($method, ltrim($uri, '/'), $options);
+            $decoded = json_decode($response->getBody()->getContents(), true);
 
-        return json_decode($response->getBody(), true);
+            return is_array($decoded) ? $decoded : [];
+        } catch (ClientException $e) {
+            $status = $e->getResponse()?->getStatusCode();
+
+            // Retry once if 401 (token expired)
+            if ($status === 401 && $retry) {
+                // Force token refresh and retry once
+                $this->accessToken = $this->oauthClient->getBearer();
+                return $this->sendRequest($method, $uri, $body, retry: false);
+            }
+
+            // Re-throw with better message
+            $msg = sprintf(
+                'TOConline API request failed (%s %s): %s',
+                strtoupper($method),
+                $uri,
+                $e->getMessage()
+            );
+            throw new RuntimeException($msg, $status ?? 0, $e);
+        }
     }
 }

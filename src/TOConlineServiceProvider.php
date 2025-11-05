@@ -8,6 +8,7 @@ class TOConlineServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
+        $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
         $this->publishes([
             __DIR__.'/../config/toconline.php' => config_path('toconline.php'),
         ], 'config');
