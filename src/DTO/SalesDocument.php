@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Mupy\TOConline\DTO;
 
-final class SalesDocument
+final class SalesDocument implements DataTransferObject
 {
     /**
      * @param  SalesDocumentLine[]  $lines
