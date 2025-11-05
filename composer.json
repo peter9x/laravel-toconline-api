@@ -1,0 +1,54 @@
+{
+    "name": "peter9x/laravel-toconline-api",
+    "description": "Laravel package for toconline API",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Peter",
+            "email": "pedro.teixeira@mupy.io"
+        }
+    ],
+    "homepage": "https://github.com/peter9x/laravel-toconline-api",
+    "keywords": [
+        "Laravel",
+        "Toc online",
+        "API"
+    ],
+    "require": {
+        "illuminate/support": "^10.0|^11.0|^12.0",
+        "league/oauth2-client": "^2",
+        "guzzlehttp/guzzle": "7.x",
+        "ext-json": "*",
+        "ext-fileinfo": "*",
+        "ext-curl": "*"
+    },
+    "require-dev": {
+        "pestphp/pest": "^v2.34|^3.7",
+        "phpunit/phpunit": "^11.5",
+        "orchestra/testbench": "^10.4",
+        "laravel/pint": "^1.24"
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Mupy\\Toconline\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Mupy\\Toconline\\ToconlineServiceProvider"
+            ],
+            "aliases": {
+                "Toconline": "Mupy\\Toconline\\Facades\\Toconline"
+            }
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
