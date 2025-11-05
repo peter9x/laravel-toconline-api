@@ -18,22 +18,19 @@ final class TOCClient
     private ?string $accessToken = null;
 
     public function __construct(
-        array $config,
-        private readonly string $baseUrl,
-        private readonly string $baseUrlOAuth
+        string $client_id,
+        string $client_secret,
+        string $baseUrlOAuth,
+        string $redirectUriOauth,
+        private readonly string $baseUrl
     ) {
         $this->http = new Client(['base_uri' => rtrim($this->baseUrl, '/').'/']);
 
-        // Try resolving redirect URI if route() is available (Laravel)
-        $redirectUri = function_exists('route')
-            ? route('toconline.callback')
-            : ($config['redirect_uri'] ?? throw new RuntimeException('Redirect URI is required.'));
-
         $this->oauthClient = new TOConlineAuth(
-            $config['client_id'] ?? throw new RuntimeException('client_id missing.'),
-            $config['client_secret'] ?? throw new RuntimeException('client_secret missing.'),
-            $this->baseUrlOAuth,
-            $redirectUri
+            $client_id,
+            $client_secret,
+            $baseUrlOAuth,
+            $redirectUriOauth
         );
     }
 
@@ -107,17 +104,5 @@ final class TOCClient
             );
             throw new RuntimeException($msg, $status ?? 0, $e);
         }
-    }
-
-    public function documents(): \Mupy\TOConline\Support\TOCQueryBuilder
-    {
-        return \Mupy\TOConline\Support\TOCQueryBuilder::make($this, '/api/commercial_sales_documents');
-    }
-
-    public function getDocument(int|string $id): \Mupy\TOConline\DTO\SalesDocument
-    {
-        $response = $this->request('GET', "/api/v1/commercial_sales_documents/{$id}");
-
-        return \Mupy\TOConline\DTO\SalesDocument::fromArray($response);
     }
 }

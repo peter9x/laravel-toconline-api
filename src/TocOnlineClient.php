@@ -3,6 +3,7 @@
 namespace Mupy\TOConline;
 
 use InvalidArgumentException;
+use RuntimeException;
 
 class TOConlineClient
 {
@@ -23,15 +24,35 @@ class TOConlineClient
     public function api(string $connectionName = 'default'): TOCClient
     {
         if (! isset($this->config['connections'][$connectionName])) {
-            throw new InvalidArgumentException("The Business Central connection '{$connectionName}' doesn't exist.");
+            throw new InvalidArgumentException("The Toconline connection '{$connectionName}' doesn't exist.");
         }
 
         $connection = $this->config['connections'][$connectionName];
 
+        throw_if(empty($connection['client_id']), RuntimeException::class, 'TOC_CLIENT_ID is required.');
+        throw_if(empty($connection['client_secret']), RuntimeException::class, 'TOC_CLIENT_SECRET is required.');
+        throw_if(empty($this->config['base_url']), RuntimeException::class, 'base_url is required.');
+        throw_if(empty($this->config['base_url_oauth']), RuntimeException::class, 'base_url_oauth is required.');
+        throw_if(empty($this->config['redirect_uri_oauth']), RuntimeException::class, 'TOC_URI_OAUTH is required.');
+
         return new TOCClient(
-            $connection,
+            client_id: $connection['client_id'],
+            client_secret: $connection['client_secret'],
             baseUrl: $this->config['base_url'],
-            baseUrlOAuth: $this->config['base_url_oauth']
+            baseUrlOAuth: $this->config['base_url_oauth'],
+            redirectUriOauth: $this->config['redirect_uri_oauth']
         );
+    }
+
+    public function documents(): \Mupy\TOConline\Support\TOCQueryBuilder
+    {
+        return \Mupy\TOConline\Support\TOCQueryBuilder::make($this->api(), '/api/v1/commercial_sales_documents');
+    }
+
+    public function getDocument(int|string $id): \Mupy\TOConline\DTO\SalesDocument
+    {
+        $response = $this->api()->request('GET', "/api/v1/commercial_sales_documents/{$id}");
+
+        return \Mupy\TOConline\DTO\SalesDocument::fromArray($response);
     }
 }

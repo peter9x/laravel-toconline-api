@@ -50,25 +50,29 @@ final class TOConlineAuth
      */
     public function oauthAuthorizationCode(string $key = 'code'): string
     {
-        $response = Http::withHeaders([
-            'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-        ])->withOptions([
-            'allow_redirects' => true,
-            'max' => 10,
-        ])->get($this->getAuthorizationUrl());
+        try {
+            $response = Http::withHeaders([
+                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+            ])->withOptions([
+                'allow_redirects' => true,
+                'max' => 5,
+            ])->get($this->getAuthorizationUrl());
 
-        $effectiveUrl = $response->transferStats->getEffectiveUri() ?? null;
+            $effectiveUrl = $response->transferStats->getEffectiveUri() ?? null;
 
-        if ($effectiveUrl) {
-            $parts = parse_url((string) $effectiveUrl);
-            parse_str($parts['query'] ?? '', $queryParams);
+            if ($effectiveUrl) {
+                $parts = parse_url((string) $effectiveUrl);
+                parse_str($parts['query'] ?? '', $queryParams);
 
-            if (isset($queryParams[$key])) {
-                return (string) $queryParams[$key];
+                if (isset($queryParams[$key])) {
+                    return (string) $queryParams[$key];
+                }
             }
-        }
 
-        throw new RuntimeException('Falha ao obter authorization_code.');
+            return '';
+        } catch (\Throwable $th) {
+            throw new RuntimeException('Falha ao obter authorization_code.', previous: $th);
+        }
     }
 
     /**

@@ -95,12 +95,13 @@ final class TOCQueryBuilder
             $query['include'] = implode(',', array_unique($this->includes));
         }
 
-        if ($this->page !== null) {
-            $query['page'] = $this->page;
-        }
-
-        if ($this->pageSize !== null) {
-            $query['page_size'] = $this->pageSize;
+        if ($this->page !== null || $this->pageSize !== null) {
+            if ($this->page !== null) {
+                $query['page[number]'] = $this->page;
+            }
+            if ($this->pageSize !== null) {
+                $query['page[size]'] = $this->pageSize;
+            }
         }
 
         return $query;
