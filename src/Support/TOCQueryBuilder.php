@@ -19,6 +19,8 @@ final class TOCQueryBuilder
 
     private ?int $pageSize = null;
 
+    private array $rawFilters = [];
+
     public function __construct(
         private readonly TOCClient $client,
         private readonly string $endpoint
@@ -78,6 +80,23 @@ final class TOCQueryBuilder
         return $this->get();
     }
 
+    /** Filter by created_at with operator */
+    public function whereCreatedAt(string $operator, string $dateTime): self
+    {
+        // Note the quotes must be included
+        $this->rawFilters[] = "\"documents.created_at>{$operator}'{$dateTime}'::date\"";
+
+        return $this;
+    }
+
+    /** Filter by updated_at with operator */
+    public function whereUpdatedAt(string $operator, string $dateTime): self
+    {
+        $this->rawFilters[] = "\"documents.updated_at{$operator}'{$dateTime}'::date\"";
+
+        return $this;
+    }
+
     /** Build query params array */
     private function toQuery(): array
     {
@@ -86,6 +105,9 @@ final class TOCQueryBuilder
         foreach ($this->filters as $key => $value) {
             $query["filter[{$key}]"] = $value;
         }
+
+        // Raw filters
+        $query['filter'] = implode('&', $this->rawFilters);
 
         if (! empty($this->sort)) {
             $query['sort'] = implode(',', $this->sort);
