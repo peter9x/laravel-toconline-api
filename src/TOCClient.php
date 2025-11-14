@@ -6,6 +6,7 @@ namespace Mupy\TOConline;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
+use Illuminate\Contracts\Cache\Repository as CacheRepository;
 use Mupy\TOConline\Auth\TOConlineAuth;
 use RuntimeException;
 
@@ -22,7 +23,11 @@ final class TOCClient
         string $client_secret,
         string $baseUrlOAuth,
         string $redirectUriOauth,
-        private readonly string $baseUrl
+        private readonly string $baseUrl,
+
+        private readonly CacheRepository $cache,
+        private bool $cacheEnabled = true,
+        private int $cacheTtl = 300
     ) {
         $this->http = new Client(['base_uri' => rtrim($this->baseUrl, '/').'/']);
 
@@ -32,6 +37,25 @@ final class TOCClient
             $baseUrlOAuth,
             $redirectUriOauth
         );
+    }
+
+    private function cachedRequest(string $cacheKey, callable $callback): array
+    {
+        if (! $this->cacheEnabled) {
+            return $callback();
+        }
+
+        return $this->cache->remember($cacheKey, $this->cacheTtl, $callback);
+    }
+
+    public function cache(bool $enable = true, int $ttl = 0): self
+    {
+        if ($ttl > 0) {
+            $this->cacheTtl = $ttl;
+        }
+        $this->cacheEnabled = $enable;
+
+        return $this;
     }
 
     /**
@@ -59,7 +83,28 @@ final class TOCClient
      */
     public function request(string $method, string $uri, array $body = []): array
     {
-        return $this->sendRequest($method, $uri, $body, retry: true);
+        $method = strtoupper($method);
+
+        $shouldCache = $this->cacheEnabled && $method === 'GET';
+
+        if (! $shouldCache) {
+            return $this->sendRequest($method, $uri, $body, retry: true);
+        }
+
+        $cacheKey = sprintf(
+            'toc:req:%s:%s:%s',
+            $method,
+            trim($uri, '/'),
+            md5(json_encode($body))
+        );
+
+        return $this->cache->remember(
+            $cacheKey,
+            $this->cacheTtl,
+            function () use ($method, $uri, $body) {
+                return $this->sendRequest($method, $uri, $body, retry: true);
+            }
+        );
     }
 
     /**
@@ -116,5 +161,15 @@ final class TOCClient
         $response = $this->request('GET', "/api/v1/commercial_sales_documents/{$id}");
 
         return \Mupy\TOConline\DTO\SalesDocument::fromArray($response);
+    }
+
+    public function _getDocument(int|string $id): \Mupy\TOConline\DTO\SalesDocument
+    {
+        $cacheKey = "toc:documents:{$id}";
+        $data = $this->cachedRequest($cacheKey, function () use ($id) {
+            return $this->request('GET', "/api/v1/commercial_sales_documents/{$id}");
+        });
+
+        return \Mupy\TOConline\DTO\SalesDocument::fromArray($data);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace Mupy\TOConline;
 
+use Illuminate\Support\Facades\Cache;
 use InvalidArgumentException;
 use RuntimeException;
 
@@ -40,7 +41,10 @@ class TOConlineClient
             client_secret: $connection['client_secret'],
             baseUrl: $this->config['base_url'],
             baseUrlOAuth: $this->config['base_url_oauth'],
-            redirectUriOauth: $this->config['redirect_uri_oauth']
+            redirectUriOauth: $this->config['redirect_uri_oauth'],
+            cache: Cache::store(),
+            cacheEnabled: config('toconline.cache.enabled', false),
+            cacheTtl: config('toconline.cache.ttl', 300)
         );
     }
 }

@@ -97,6 +97,13 @@ final class TOCQueryBuilder
         return $this;
     }
 
+    public function whereDatedAt(string $operator, string $dateTime): self
+    {
+        $this->rawFilters[] = "\"documents.date{$operator}'{$dateTime}'::date\"";
+
+        return $this;
+    }
+
     /** Build query params array */
     private function toQuery(): array
     {
