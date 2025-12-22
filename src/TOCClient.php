@@ -29,7 +29,10 @@ final class TOCClient
         private bool $cacheEnabled = true,
         private int $cacheTtl = 300
     ) {
-        $this->http = new Client(['base_uri' => rtrim($this->baseUrl, '/').'/']);
+        $this->http = new Client([
+            'base_uri' => rtrim($this->baseUrl, '/').'/',
+            'timeout' => 60,
+        ]);
 
         $this->oauthClient = new TOConlineAuth(
             $client_id,
@@ -125,7 +128,7 @@ final class TOCClient
         }
 
         try {
-            $response = $this->http->request($method, ltrim($uri, '/'), $options);
+            $response = $this->http->request($method, $uri, $options);
             $decoded = json_decode($response->getBody()->getContents(), true);
 
             return is_array($decoded) ? $decoded : [];

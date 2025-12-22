@@ -11,6 +11,8 @@ final class TOCQueryBuilder
 {
     private array $filters = [];
 
+    private array $rawFilters = [];
+
     private array $sort = [];
 
     private array $includes = [];
@@ -18,8 +20,6 @@ final class TOCQueryBuilder
     private ?int $page = null;
 
     private ?int $pageSize = null;
-
-    private array $rawFilters = [];
 
     public function __construct(
         private readonly TOCClient $client,
@@ -31,7 +31,7 @@ final class TOCQueryBuilder
         return new self($client, $endpoint);
     }
 
-    /** Add a filter field */
+    /** Simple field filters */
     public function where(string $field, string|int|float|bool|BackedEnum|null $value): self
     {
         if ($value instanceof BackedEnum) {
@@ -42,15 +42,31 @@ final class TOCQueryBuilder
         return $this;
     }
 
-    /** Example of a typed helper */
-    public function whereStatus(BackedEnum|int $status): self
+    /** RAW filter (Postman style) */
+    private function addRaw(string $expression): self
     {
-        if ($status instanceof BackedEnum) {
-            $status = $status->value;
-        }
-        $this->filters['status'] = $status;
+        // TOConline requires the whole filter expression wrapped in quotes
+        $this->rawFilters[] = '"'.$expression.'"';
 
         return $this;
+    }
+
+    /** Filter by updated_at with operator */
+    public function whereUpdatedAt(string $operator, string $dateTime): self
+    {
+        return $this->addRaw("documents.updated_at{$operator}'{$dateTime}'::TIMESTAMP");
+    }
+
+    /** Filter by created_at */
+    public function whereCreatedAt(string $operator, string $dateTime): self
+    {
+        return $this->addRaw("documents.created_at{$operator}'{$dateTime}'::TIMESTAMP");
+    }
+
+    /** Filter by document date */
+    public function whereDatedAt(string $operator, string $dateTime): self
+    {
+        return $this->addRaw("documents.date{$operator}'{$dateTime}'::TIMESTAMP");
     }
 
     /** Sorting */
@@ -80,74 +96,51 @@ final class TOCQueryBuilder
         return $this->get();
     }
 
-    /** Filter by created_at with operator */
-    public function whereCreatedAt(string $operator, string $dateTime): self
+    /** Build the RAW query string manually (Postman-style) */
+    private function buildQueryString(): string
     {
-        // Note the quotes must be included
-        $this->rawFilters[] = "\"documents.created_at>{$operator}'{$dateTime}'::date\"";
-
-        return $this;
-    }
-
-    /** Filter by updated_at with operator */
-    public function whereUpdatedAt(string $operator, string $dateTime): self
-    {
-        $this->rawFilters[] = "\"documents.updated_at{$operator}'{$dateTime}'::date\"";
-
-        return $this;
-    }
-
-    public function whereDatedAt(string $operator, string $dateTime): self
-    {
-        $this->rawFilters[] = "\"documents.date{$operator}'{$dateTime}'::date\"";
-
-        return $this;
-    }
-
-    /** Build query params array */
-    private function toQuery(): array
-    {
-        $query = [];
-
-        foreach ($this->filters as $key => $value) {
-            $query["filter[{$key}]"] = $value;
+        $queryParams = [];
+        // Raw filter override (TOConline uses `filter=...`)
+        if (! empty($this->rawFilters)) {
+            $queryParams['filter'] = implode('&', $this->rawFilters);
         }
 
-        // Raw filters
-        $query['filter'] = implode('&', $this->rawFilters);
+        // Normal filter fields: filter[field]=value
+        foreach ($this->filters as $field => $value) {
+            $queryParams["filter[{$field}]="] = $value;
+        }
 
         if (! empty($this->sort)) {
-            $query['sort'] = implode(',', $this->sort);
+            $queryParams['sort'] = implode(',', $this->sort);
         }
 
         if (! empty($this->includes)) {
-            $query['include'] = implode(',', array_unique($this->includes));
+            $queryParams['include'] = implode(',', array_unique($this->includes));
         }
 
-        if ($this->page !== null || $this->pageSize !== null) {
-            if ($this->page !== null) {
-                $query['page[number]'] = $this->page;
-            }
-            if ($this->pageSize !== null) {
-                $query['page[size]'] = $this->pageSize;
-            }
+        if ($this->page !== null) {
+            $queryParams['page[number]'] = $this->page;
         }
 
-        return $query;
-    }
+        if ($this->pageSize !== null) {
+            $queryParams['page[size]'] = $this->pageSize;
+        }
 
-    public function find(int|string $id): array
-    {
-        $uri = rtrim($this->endpoint, '/').'/'.urlencode((string) $id);
-
-        return $this->client->request('GET', $uri);
+        return http_build_query($queryParams);
     }
 
     /** Execute GET request */
     public function get(): array
     {
-        $queryString = http_build_query($this->toQuery());
-        $uri = "{$this->endpoint}?".$queryString;
+        $query = $this->buildQueryString();
+        $uri = $this->endpoint.'?'.$query;
+
+        return $this->client->request('GET', $uri);
+    }
+
+    public function find(int|string $id): array
+    {
+        $uri = rtrim($this->endpoint, '/').'/'.urlencode((string) $id);
 
         return $this->client->request('GET', $uri);
     }
