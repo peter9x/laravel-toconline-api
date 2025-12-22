@@ -20,6 +20,8 @@ class TOConlineClient
         }
 
         $this->config = $config;
+
+        throw_if(! is_array($this->config), RuntimeException::class, 'TOConline configuration is invalid.');
     }
 
     public function api(string $connectionName = 'default'): TOCClient
@@ -30,11 +32,11 @@ class TOConlineClient
 
         $connection = $this->config['connections'][$connectionName];
 
-        throw_if(empty($connection['client_id']), RuntimeException::class, 'TOC_CLIENT_ID is required.');
-        throw_if(empty($connection['client_secret']), RuntimeException::class, 'TOC_CLIENT_SECRET is required.');
-        throw_if(empty($this->config['base_url']), RuntimeException::class, 'base_url is required.');
-        throw_if(empty($this->config['base_url_oauth']), RuntimeException::class, 'base_url_oauth is required.');
-        throw_if(empty($this->config['redirect_uri_oauth']), RuntimeException::class, 'TOC_URI_OAUTH is required.');
+        throw_if(empty($connection['client_id']), RuntimeException::class, 'TOC_CLIENT_ID is required. on connection:'.$connectionName);
+        throw_if(empty($connection['client_secret']), RuntimeException::class, 'TOC_CLIENT_SECRET is required. on connection:'.$connectionName);
+        throw_if(empty($this->config['base_url']), RuntimeException::class, 'base_url is required. on connection:'.$connectionName);
+        throw_if(empty($this->config['base_url_oauth']), RuntimeException::class, 'base_url_oauth is required. on connection:'.$connectionName);
+        throw_if(empty($this->config['redirect_uri_oauth']), RuntimeException::class, 'TOC_URI_OAUTH is required. on connection:'.$connectionName);
 
         return new TOCClient(
             client_id: $connection['client_id'],
