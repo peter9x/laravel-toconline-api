@@ -52,24 +52,32 @@ final class TOConlineAuth
     {
         try {
             $response = Http::withHeaders([
-                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-            ])->withOptions([
-                'allow_redirects' => true,
-                'max' => 5,
-            ])->get($this->getAuthorizationUrl());
+                'Content-Type' => 'application/json',
+                'User-Agent' => 'Mozilla/5.0',
+            ])
+                ->withOptions([
+                    'allow_redirects' => false,
+                ])
+                ->get($this->getAuthorizationUrl());
 
-            $effectiveUrl = $response->transferStats->getEffectiveUri() ?? null;
-
-            if ($effectiveUrl) {
-                $parts = parse_url((string) $effectiveUrl);
-                parse_str($parts['query'] ?? '', $queryParams);
-
-                if (isset($queryParams[$key])) {
-                    return (string) $queryParams[$key];
-                }
+            if ($response->status() !== 302) {
+                throw new RuntimeException('Expected 302 response, got '.$response->status().': '.$response->body());
             }
 
-            return '';
+            $location = $response->header('Location');
+
+            if (! $location) {
+                throw new RuntimeException('Missing Location header in OAuth response.');
+            }
+
+            $parts = parse_url($location);
+            parse_str($parts['query'] ?? '', $queryParams);
+
+            if (! isset($queryParams[$key])) {
+                throw new RuntimeException('Authorization code not found in Location header.');
+            }
+
+            return (string) $queryParams[$key];
         } catch (\Throwable $th) {
             throw new RuntimeException('Falha ao obter authorization_code.', previous: $th);
         }
