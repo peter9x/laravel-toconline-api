@@ -8,6 +8,8 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use Illuminate\Contracts\Cache\Repository as CacheRepository;
 use Mupy\TOConline\Auth\TOConlineAuth;
+use Mupy\TOConline\DTO\SalesDocument;
+use Mupy\TOConline\Support\TOCQueryBuilder;
 use RuntimeException;
 
 final class TOCClient
@@ -162,30 +164,30 @@ final class TOCClient
         }
     }
 
-    public function documents(): \Mupy\TOConline\Support\TOCQueryBuilder
+    public function documents(): TOCQueryBuilder
     {
-        return \Mupy\TOConline\Support\TOCQueryBuilder::make($this, '/api/v1/commercial_sales_documents');
+        return TOCQueryBuilder::make($this, '/api/v1/commercial_sales_documents');
     }
 
-    public function customers(): \Mupy\TOConline\Support\TOCQueryBuilder
+    public function customers(): TOCQueryBuilder
     {
-        return \Mupy\TOConline\Support\TOCQueryBuilder::make($this, '/api/customers');
+        return TOCQueryBuilder::make($this, '/api/customers');
     }
 
-    public function getDocument(int|string $id): \Mupy\TOConline\DTO\SalesDocument
+    public function getDocument(int|string $id): SalesDocument
     {
         $response = $this->request('GET', "/api/v1/commercial_sales_documents/{$id}");
 
-        return \Mupy\TOConline\DTO\SalesDocument::fromArray($response);
+        return SalesDocument::fromArray($response);
     }
 
-    public function _getDocument(int|string $id): \Mupy\TOConline\DTO\SalesDocument
+    public function _getDocument(int|string $id): SalesDocument
     {
         $cacheKey = "toc:documents:{$id}";
         $data = $this->cachedRequest($cacheKey, function () use ($id) {
             return $this->request('GET', "/api/v1/commercial_sales_documents/{$id}");
         });
 
-        return \Mupy\TOConline\DTO\SalesDocument::fromArray($data);
+        return SalesDocument::fromArray($data);
     }
 }

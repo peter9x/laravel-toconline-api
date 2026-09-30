@@ -2,13 +2,14 @@
 
 namespace Tests\Feature;
 
+use Mupy\TOConline\TOConlineServiceProvider;
 use Orchestra\Testbench\TestCase;
 
 class TOConlineClientTest extends TestCase
 {
     protected function getPackageProviders($app)
     {
-        return [\Mupy\TOConline\TOConlineServiceProvider::class];
+        return [TOConlineServiceProvider::class];
     }
 
     /** @test */
