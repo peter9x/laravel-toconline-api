@@ -27,7 +27,8 @@ final class TOCClient
 
         private readonly CacheRepository $cache,
         private bool $cacheEnabled = true,
-        private int $cacheTtl = 300
+        private int $cacheTtl = 300,
+        int $refreshTokenTtl = 28800
     ) {
         $this->http = new Client([
             'base_uri' => rtrim($this->baseUrl, '/').'/',
@@ -38,8 +39,14 @@ final class TOCClient
             $client_id,
             $client_secret,
             $baseUrlOAuth,
-            $redirectUriOauth
+            $redirectUriOauth,
+            $refreshTokenTtl
         );
+    }
+
+    public function auth(): TOConlineAuth
+    {
+        return $this->oauthClient;
     }
 
     private function cachedRequest(string $cacheKey, callable $callback): array
@@ -138,6 +145,7 @@ final class TOCClient
             // Retry once if 401 (token expired)
             if ($status === 401 && $retry) {
                 // Force token refresh and retry once
+                $this->oauthClient->forgetAccessToken();
                 $this->accessToken = $this->oauthClient->getBearer();
 
                 return $this->sendRequest($method, $uri, $body, retry: false);
@@ -157,6 +165,11 @@ final class TOCClient
     public function documents(): \Mupy\TOConline\Support\TOCQueryBuilder
     {
         return \Mupy\TOConline\Support\TOCQueryBuilder::make($this, '/api/v1/commercial_sales_documents');
+    }
+
+    public function customers(): \Mupy\TOConline\Support\TOCQueryBuilder
+    {
+        return \Mupy\TOConline\Support\TOCQueryBuilder::make($this, '/api/customers');
     }
 
     public function getDocument(int|string $id): \Mupy\TOConline\DTO\SalesDocument

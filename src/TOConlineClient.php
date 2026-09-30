@@ -24,6 +24,11 @@ class TOConlineClient
         throw_if(! is_array($this->config), RuntimeException::class, 'TOConline configuration is invalid.');
     }
 
+    public function connections(): array
+    {
+        return array_keys($this->config['connections']);
+    }
+
     public function api(string $connectionName = 'default'): TOCClient
     {
         if (! isset($this->config['connections'][$connectionName])) {
@@ -46,7 +51,8 @@ class TOConlineClient
             redirectUriOauth: $this->config['redirect_uri_oauth'],
             cache: Cache::store(),
             cacheEnabled: config('toconline.cache.enabled', false),
-            cacheTtl: config('toconline.cache.ttl', 300)
+            cacheTtl: config('toconline.cache.ttl', 300),
+            refreshTokenTtl: (int) ($this->config['refresh_token_ttl'] ?? 28800)
         );
     }
 }

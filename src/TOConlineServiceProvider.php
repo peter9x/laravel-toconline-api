@@ -12,6 +12,13 @@ class TOConlineServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__.'/../config/toconline.php' => config_path('toconline.php'),
         ], 'config');
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                Console\RefreshTokenCommand::class,
+                Console\TestConnectionCommand::class,
+            ]);
+        }
     }
 
     public function register()
