@@ -30,6 +30,9 @@
         "laravel/pint": "^1.24"
     },
     "config": {
+        "platform": {
+            "php": "8.2.0"
+        },
         "allow-plugins": {
             "pestphp/pest-plugin": true
         }
