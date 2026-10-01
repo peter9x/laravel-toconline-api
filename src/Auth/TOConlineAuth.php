@@ -77,6 +77,13 @@ final class TOConlineAuth
             $parts = parse_url($location);
             parse_str($parts['query'] ?? '', $queryParams);
 
+            if (isset($queryParams['error'])) {
+                throw new RuntimeException(
+                    "TOConline devolveu error={$queryParams['error']}. Confirme que o redirect_uri ({$this->redirectUri}) "
+                    .'é exatamente o registado nos dados API do TOConline.'
+                );
+            }
+
             if (! isset($queryParams[$key])) {
                 throw new RuntimeException('Authorization code not found in Location header: '.$location);
             }
