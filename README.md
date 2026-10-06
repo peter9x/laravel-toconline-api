@@ -1,7 +1,10 @@
 <p align="center">
-    <a href="https://github.com/peter9x/laravel-toconline-api/actions"><img src="https://github.com/peter9x/laravel-bc/actions/workflows/php.yml/badge.svg" alt="Build Status"></a>
-    <a href="https://packagist.org/packages/peter9x/laravel-toconline-api"><img src="https://img.shields.io/packagist/v/peter9x/laravel-toconline-api?style=for-the-badge" alt="Latest Stable Version"></a>
-    <a href="https://packagist.org/packages/peter9x/laravel-toconline-api"><img src="https://img.shields.io/packagist/l/peter9x/laravel-toconline-api?style=for-the-badge" alt="License"></a>
+    <a href="https://github.com/peter9x/laravel-toconline-api/actions">
+        <img src="https://github.com/peter9x/laravel-bc/actions/workflows/php.yml/badge.svg?style=for-the-badge" alt="Build Status"></a>
+    <a href="https://packagist.org/packages/peter9x/laravel-toconline-api">
+        <img src="https://img.shields.io/packagist/v/peter9x/laravel-toconline-api?style=for-the-badge" alt="Latest Stable Version"></a>
+    <a href="https://packagist.org/packages/peter9x/laravel-toconline-api">
+        <img src="https://img.shields.io/packagist/l/peter9x/laravel-toconline-api?style=for-the-badge" alt="License"></a>
 </p>
 
 # laravel-toconline-api
